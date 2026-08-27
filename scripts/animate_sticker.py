@@ -16,24 +16,33 @@ import sys
 
 try:
     from PIL import Image
+    from PIL.Image import Resampling
 except ImportError:
     sys.stderr.write("缺少依赖 Pillow,请先运行: pip install Pillow\n")
     sys.exit(2)
 
+LANCZOS = Resampling.LANCZOS
+BICUBIC = Resampling.BICUBIC
+
+ANIMS = ("bounce", "shake", "pulse", "wobble")
+
 
 def load_subject(path):
-    """载入并裁掉透明边,拿到紧凑主体。"""
+    """载入并裁掉透明边,拿到紧凑主体。全透明图给出明确报错而非崩溃。"""
     im = Image.open(path).convert("RGBA")
     bbox = im.getbbox()
-    return im.crop(bbox) if bbox else im
+    if bbox is None:
+        sys.stderr.write(f"错误: {path} 是全透明图,没有任何可见像素\n")
+        sys.exit(2)
+    return im.crop(bbox)
 
 
 def make_frame(subject, size, sx, sy, dx, dy, rot):
     w = max(1, int(subject.width * sx))
     h = max(1, int(subject.height * sy))
-    s = subject.resize((w, h), Image.LANCZOS)
+    s = subject.resize((w, h), LANCZOS)
     if rot:
-        s = s.rotate(rot, resample=Image.BICUBIC, expand=True)
+        s = s.rotate(rot, resample=BICUBIC, expand=True)
     canvas = Image.new("RGBA", size, (0, 0, 0, 0))
     x = (size[0] - s.width) // 2 + dx
     y = (size[1] - s.height) // 2 + dy
@@ -41,10 +50,10 @@ def make_frame(subject, size, sx, sy, dx, dy, rot):
     return canvas
 
 
-def build_frames(subject, size, anim, n):
-    # 主体基础高度:留出弹跳/摇摆空间
-    base = int(size[1] * 0.72)
-    k = base / subject.height
+def build_frames(subject, size, anim, n, scale=0.72):
+    # 主体基础高度:留出弹跳/摇摆空间;scale 控制主体占比(默认 0.72)
+    base = int(size[1] * scale)
+    k = base / max(subject.height, 1)
     frames = []
     for i in range(n):
         t = i / n  # 0→1 一个循环
@@ -96,22 +105,36 @@ def save_gif(frames_rgba, out, duration, colors):
 def main():
     ap = argparse.ArgumentParser(description="静态贴纸 → 程序化动画 GIF")
     ap.add_argument("input", help="透明底 PNG 源图")
-    ap.add_argument("--anim", choices=["bounce", "shake", "pulse", "wobble"], default="bounce")
+    ap.add_argument("--anim", choices=ANIMS, default="bounce")
     ap.add_argument("--size", default="240x240", help="输出尺寸,默认 240x240(微信规范)")
     ap.add_argument("--frames", type=int, default=16, help="帧数,默认 16")
     ap.add_argument("--duration", type=int, default=80, help="每帧毫秒,默认 80")
+    ap.add_argument("--scale", type=float, default=0.72, help="主体占画布高度的比例,默认 0.72")
     ap.add_argument("--out", required=True, help="输出 GIF 路径")
     ap.add_argument("--max-kb", type=int, default=500, help="体积上限 KB,默认 500(微信)")
     args = ap.parse_args()
 
+    if not (0 < args.scale <= 1):
+        sys.stderr.write("--scale 需在 (0, 1] 区间\n")
+        sys.exit(2)
+
     w, h = (int(x) for x in args.size.lower().split("x"))
+    if w <= 0 or h <= 0:
+        sys.stderr.write(f"非法尺寸: {args.size}\n")
+        sys.exit(2)
+
+    out_dir = os.path.dirname(os.path.abspath(args.out))
+    os.makedirs(out_dir, exist_ok=True)
+
     subject = load_subject(args.input)
-    frames = build_frames(subject, (w, h), args.anim, args.frames)
+    frames = build_frames(subject, (w, h), args.anim, args.frames, args.scale)
 
     # 体积控制:先 255 色,超限降色,再超限抽帧
+    last_kb = None
     for colors in (255, 127, 63):
         save_gif(frames, args.out, args.duration, colors)
         kb = os.path.getsize(args.out) / 1024
+        last_kb = kb
         if kb <= args.max_kb:
             print(f"完成: {args.out} | {w}x{h} | {args.anim} | {args.frames}帧×{args.duration}ms | {colors}色 | {kb:.1f}KB ≤ {args.max_kb}KB PASS")
             return
@@ -119,10 +142,11 @@ def main():
             thin = frames[::2]
             save_gif(thin, args.out, args.duration * 2, 63)
             kb = os.path.getsize(args.out) / 1024
+            last_kb = kb
             if kb <= args.max_kb:
                 print(f"完成(已抽帧至 {len(thin)} 帧): {args.out} | {kb:.1f}KB PASS")
                 return
-    print(f"警告: 仍超限 {kb:.1f}KB > {args.max_kb}KB,请减帧或缩小主体占比")
+    print(f"警告: 仍超限 {last_kb:.1f}KB > {args.max_kb}KB,请减帧(--frames)或缩小主体占比(--scale)")
 
 
 if __name__ == "__main__":

@@ -13,12 +13,13 @@ GitHub / ClawHub 上的表情包 skill 大多只管「生成」,普遍忽略两�
 
 - **硬约束速查前置**:微信全参数表(240×240 主图 / 50×50 图标 / 750×400 横幅…)、小红书 / 抖音推荐尺寸、违禁词红线,产出前逐条对照
 - **四条工作路线**:
-  - A 微信表情上架(成套 8–24 张 + 上架元数据)
+  - A 微信表情上架(成套 8–24 张 + 上架元数据 + 站点实操步骤)
   - B 小红书 / 抖音内联表情(笔记配图 / 聊天表情)
   - C 已有图片批量裁切 + 规范命名 + ZIP 打包
   - D **动态 GIF——单张静态贴图程序化动画(bounce / shake / pulse / wobble),零 API 成本**,自动控体积 ≤500KB
+- **一键五件套**:`--wechat` 预设一次生成主图 / 聊天图标 / 封面 / 横幅 / 缩略图,自动建目录、规范命名、体积校验
 - **规则更新与退出机制**:条目生命周期 `pending-verify → active → deprecated`;说「更新表情包规则」即触发巡检(WebFetch 官方源 → diff 报告 → 确认后落盘),作废规则留痕不删除
-- **违禁词校验**:优先复用 `multi-wordcheck` 类实时检测 skill(宿主环境有则用);未安装则降级用内置离线种子集(法定极限词)兜底
+- **违禁词校验**:优先复用 `multi-wordcheck` 类实时检测 skill(宿主环境有则用);未安装则降级用 `check_compliance.py` 离线种子集兜底
 
 ## 安装
 
@@ -44,11 +45,17 @@ git clone https://github.com/bonniegeng-max/emoji-sticker-cn.git
 脚本直用:
 
 ```bash
-# 批量裁切 + 规范命名 + 打包
-python3 scripts/resize_stickers.py ./raw --size 240x240 --bg transparent --format png --prefix emoji --out ./wechat --zip
+# 微信五件套:主图/图标/封面/横幅/缩略图一次生成 + 规范命名 + 打包 + 体积校验
+python3 scripts/resize_stickers.py ./raw --wechat --out ./wechat_pack --zip --max-kb 500
+
+# 单尺寸批量(命名 01.png…24.png)
+python3 scripts/resize_stickers.py ./raw --size 240x240 --bg transparent --format png --out ./out --zip
 
 # 静态贴纸 → 动画 GIF(零积分)
 python3 scripts/animate_sticker.py cat.png --anim bounce --out cat_bounce.gif
+
+# 文案离线违禁词校验(兜底;正式发布前优先 multi-wordcheck)
+python3 scripts/check_compliance.py "全网最低价,加微信详聊" --platform xiaohongshu douyin
 ```
 
 ## 目录
@@ -59,8 +66,9 @@ python3 scripts/animate_sticker.py cat.png --anim bounce --out cat_bounce.gif
 │   ├── 中文平台表情包尺寸规范.md              # 微信/QQ/飞书官方核实 + 内联平台标注(持续维护)
 │   └── 中文平台违禁词合规参考.md              # 类别体系 + 权威来源 + 极限词种子集(持续维护)
 └── scripts/
-    ├── resize_stickers.py                    # 批量裁切 / 命名 / ZIP
-    └── animate_sticker.py                    # 静态贴纸 → 程序化动画 GIF
+    ├── resize_stickers.py                    # 批量裁切 / 命名 / ZIP / 微信五件套
+    ├── animate_sticker.py                    # 静态贴纸 → 程序化动画 GIF
+    └── check_compliance.py                   # 离线违禁词 / 极限词快速校验(兜底)
 ```
 
 ## 数据可信度约定

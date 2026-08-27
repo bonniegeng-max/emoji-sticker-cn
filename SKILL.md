@@ -1,7 +1,7 @@
 ---
 name: emoji-sticker-cn
 description: This skill should be used when the user wants to create Chinese-platform compliant emoji/sticker packs (微信表情开放平台 / 小红书 / 抖音), covering image generation, platform-specific resizing and cropping, sequential naming, upload metadata, and sensitive-word compliance checks. It fills the gap that most emoji skills ignore Chinese platform specs and content compliance. Also triggers on 更新表情包规则 / 巡检表情包规范 to run the rule-inspection workflow.
-version: 1.1.0
+version: 1.2.0
 license: MIT
 trigger: "表情包|贴纸|表情上架|动态表情|GIF表情|更新表情包规则|巡检表情包规范"
 agent_created: true
@@ -27,15 +27,19 @@ agent_created: true
 | 聊天面板图标 | 50×50 | PNG,≤100KB | 透明底 |
 | 封面图 | 240×240 | PNG,≤500KB | 透明底 |
 | 详情页横幅 | 750×400 | PNG/JPG,≤500KB | **禁透明底、禁纯白底** |
-| 缩略图 | 120×120(专辑) | PNG,≤200KB | 透明底 |
+| 缩略图 | 120×120(专辑)/ 240×240(单品) | PNG,≤200KB | 透明底 |
+| 赞赏引导图 | 750×560 | — | — |
+| 致谢图 | 750×750 | GIF/PNG,≤500KB | — |
+| 特效 | ≤480×480、≤24 帧 | PNG,整体≤5MB | — |
 - 成套:**8–24 张**(单品可 1 张);动态须无缝循环;单品名 ≤ 4 汉字。
+- 命名:文件用英文 / 数字序号(`01.png`…`24.png`),单品名(展示名)≤ 4 汉字。
 
 ### 小红书 / 抖音(内联,无正式商店)
 - 小红书:1080×1080(笔记配图);GIF 常被转静态,优先静态图。
 - 抖音:240–1000px,GIF/WebP ≤5MB(经验值,非官方强制)。
 
 ### 违禁词(文案 / 上架描述 / 专辑名)
-- **硬性流程**:任何对外文案必须先过 `multi-wordcheck`(公众号/小红书/抖音,若宿主环境已安装);未安装则降级用 `references/中文平台违禁词合规参考.md` 种子集校验,并向用户说明这是离线兜底、非实时。校验通过才算完成。
+- **硬性流程**:任何对外文案必须先过 `multi-wordcheck`(公众号/小红书/抖音,若宿主环境已安装);未安装则降级用 `scripts/check_compliance.py` + `references/中文平台违禁词合规参考.md` 种子集做离线兜底,并向用户说明这是离线兜底、非实时。校验通过才算完成。
 - 红线类别:广告法极限词、政治敏感、色情低俗、虚假医疗、私域导流(小红书)、站外引流(抖音)。
 
 > 完整规范与源 URL 见 `references/`。**执行时以 references 中 `status = active` 且「官方核实」的条目为最终依据**;`pending-verify` 条目需提示用户复核,`deprecated` 条目一律不得使用。
@@ -52,25 +56,33 @@ agent_created: true
 
 **路线 A — 微信表情开放平台上架(主目标,有正式规范)**
 1. **生成**:用宿主生图工具(WorkBuddy: `ImageGen`)产出表情图(prompt 要点:同一角色 / 统一风格;`background: transparent`;如需角色一致可先出 1 张定稿,再用图生图批量延展)。
-2. **裁切 + 命名**:用 `scripts/resize_stickers.py` 批量处理——
-   - 主图 240×240 透明底 PNG,命名 `01.png`…`24.png`(一套 8–24 张)
-   - 聊天面板图标 50×50;封面 240×240;详情横幅 750×400(非透明底)
+2. **裁切 + 命名**:一键五件套——
+   ```bash
+   python3 scripts/resize_stickers.py ./raw --wechat --out ./wechat_pack --zip --max-kb 500
+   ```
+   自动输出 主图 240×240 / 聊天面板图标 50×50 / 封面 240×240 / 详情页横幅 750×400(默认浅灰底,禁纯白)/ 缩略图 120×120,全部规范命名 `01.png`…`24.png`,每类独立 ZIP。也可单独指定尺寸:`--size 240x240 --bg transparent`。
 3. **上架元数据**:准备专辑名(≤4 汉字)、描述、封面、横幅。
-4. **合规校验**:文案 / 描述优先调 `multi-wordcheck`(未装则用参考文件兜底);不通过则改写后复检。
-5. **打包**:`scripts/resize_stickers.py --zip` 输出 ZIP 供上架。
+4. **合规校验**:文案 / 描述优先调 `multi-wordcheck`(未装则用 `scripts/check_compliance.py` 离线兜底并提示局限);不通过则改写后复检。
+5. **上架实操**(sticker.weixin.qq.com):
+   1. 登录微信表情开放平台,进入「提交表情」;
+   2. 创建专辑:填专辑名(≤4 汉字)、简介、分类、标签;
+   3. 按资产表逐项上传主图 / 图标 / 封面 / 横幅 / 缩略图;
+   4. 逐张填写单品名(每张 ≤4 汉字)与描述;
+   5. 预览确认透明底、循环动画无闪断后提交审核(通常 3–7 个工作日);
+   6. 被驳回时按驳回原因修改素材 / 文案后重新提交。
 
 **路线 B — 小红书 / 抖音(内联图片,无正式上架平台)**
 1. 宿主生图工具生成表情图。
 2. 裁切到推荐尺寸:小红书 1080×1080(笔记配图)、抖音 240–1000px GIF/WebP。
-3. 文案走违禁词校验(优先 `multi-wordcheck`;小红书严打私域导流与绝对化词,抖音严查站外引流)。
+3. 文案走违禁词校验(优先 `multi-wordcheck`;小红书严打私域导流与绝对化词,抖音严查站外引流;离线兜底:`check_compliance.py --platform xiaohongshu douyin`)。
 4. 直接用于笔记 / 聊天,无需成套上架。
 
 **路线 C — 已有图片批量裁切**
-- 直接跑 `scripts/resize_stickers.py`,指定平台尺寸与背景,输出规范图 + 可选 ZIP。
+- 直接跑 `scripts/resize_stickers.py`,指定平台尺寸与背景,输出规范图 + 可选 ZIP;`--fit cover` 可裁切填满、`--max-kb` 可校验体积超限。
 
 **路线 D — 动态 GIF(程序化动画,零积分,优先推荐)**
 - 适用:弹跳 / 摇摆 / 缩放类简单动效——微信「沙雕动态表情」的主流做法,零 API 成本、透明底天然保留。
-- 用 `scripts/animate_sticker.py`:输入**一张透明底静态贴图** → 输出循环透明底 GIF,默认 240×240、≤500KB(微信规范),超限自动降色 / 抽帧。
+- 用 `scripts/animate_sticker.py`:输入**一张透明底静态贴图** → 输出循环透明底 GIF,默认 240×240、≤500KB(微信规范),超限自动降色 / 抽帧;`--scale` 控制主体占比。
 - 内置动效:`bounce`(弹跳 + 挤压拉伸)/ `shake`(左右晃)/ `pulse`(呼吸缩放)/ `wobble`(摇摆)。
 - 进阶可选(消耗积分):更丰富动作用宿主生图工具逐帧图生图(WorkBuddy `ImageGen` 每帧 5–10 credits)再本地合成,需注意帧间一致性;不推荐视频转 GIF 路线(50–100 credits/条 + 逐帧去底闪烁问题)。
 
@@ -95,8 +107,8 @@ agent_created: true
 - `references/中文平台违禁词合规参考.md` — 违禁词类别、权威来源、平台专属敏感点、通用极限词种子集。**实际校验优先复用 `multi-wordcheck`,本文件仅兜底。**
 
 ## Hard rules
-- 微信主图 / 图标 / 封面必须**透明底**,白边会被驳回。
-- **不要重造违禁词检测**:有 `multi-wordcheck` 就调;没有才用参考文件兜底并说明局限。
+- 微信主图 / 图标 / 封面必须**透明底**,白边会被驳回;详情页横幅**禁透明底、禁纯白底**(用脚本 `--wechat` 默认浅灰底)。
+- **不要重造违禁词检测**:有 `multi-wordcheck` 就调;没有才用 `check_compliance.py` 兜底并说明局限。
 - 抖音 / 小红书无正式表情商店,按「内联图片」处理,不强求成套。
 - 尺寸执行依据 = references 中 `active` + 官方核实条目;`pending-verify` 需提示复核;`deprecated` 一律不用。
 - 规则巡检**先报告、后确认、再落盘**,禁止未经确认直接改 references。
@@ -104,9 +116,15 @@ agent_created: true
 
 ## Script
 ```bash
-# 批量裁切 + 规范命名 + 打包
-python3 scripts/resize_stickers.py ./raw --size 240x240 --bg transparent --format png --prefix emoji --out ./wechat --zip
+# 微信五件套:主图/图标/封面/横幅/缩略图一次生成 + 规范命名 + 打包 + 体积校验
+python3 scripts/resize_stickers.py ./raw --wechat --out ./wechat_pack --zip --max-kb 500
+
+# 单尺寸批量(命名 01.png…24.png)
+python3 scripts/resize_stickers.py ./raw --size 240x240 --bg transparent --format png --out ./out --zip
 
 # 静态贴纸 → 动画 GIF(零积分)
 python3 scripts/animate_sticker.py cat.png --anim bounce --out cat_bounce.gif
+
+# 文案离线违禁词校验(兜底;正式发布前仍优先 multi-wordcheck)
+python3 scripts/check_compliance.py "全网最低价,加微信详聊" --platform xiaohongshu douyin
 ```
