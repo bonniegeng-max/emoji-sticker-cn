@@ -1,7 +1,7 @@
 ---
 name: emoji-sticker-cn
 description: This skill should be used when the user wants to create Chinese-platform compliant emoji/sticker packs (微信表情开放平台 / 小红书 / 抖音), covering image generation, platform-specific resizing and cropping, sequential naming, upload metadata, and sensitive-word compliance checks. It fills the gap that most emoji skills ignore Chinese platform specs and content compliance. Also triggers on 更新表情包规则 / 巡检表情包规范 to run the rule-inspection workflow.
-version: 1.2.0
+version: 2.0.0
 license: MIT
 trigger: "表情包|贴纸|表情上架|动态表情|GIF表情|更新表情包规则|巡检表情包规范"
 agent_created: true
@@ -80,10 +80,14 @@ agent_created: true
 **路线 C — 已有图片批量裁切**
 - 直接跑 `scripts/resize_stickers.py`,指定平台尺寸与背景,输出规范图 + 可选 ZIP;`--fit cover` 可裁切填满、`--max-kb` 可校验体积超限。
 
-**路线 D — 动态 GIF(程序化动画,零积分,优先推荐)**
-- 适用:弹跳 / 摇摆 / 缩放类简单动效——微信「沙雕动态表情」的主流做法,零 API 成本、透明底天然保留。
-- 用 `scripts/animate_sticker.py`:输入**一张透明底静态贴图** → 输出循环透明底 GIF,默认 240×240、≤500KB(微信规范),超限自动降色 / 抽帧;`--scale` 控制主体占比。
-- 内置动效:`bounce`(弹跳 + 挤压拉伸)/ `shake`(左右晃)/ `pulse`(呼吸缩放)/ `wobble`(摇摆)。
+**路线 D — 动态 GIF(内容匹配型动画,零积分,优先推荐)**
+- **v2 工作流(看图自动配动效)**:
+  1. **画像**:agent 直接查看贴图,输出内容画像——主体类型(人物全身/大头像/动物/物件/文字)、情绪、动态倾向、置信度;
+  2. **匹配**:查 `references/动效匹配规则.md` 选配方;置信度低 → `neutral` 兜底(宁可轻微也不生硬);文字型主体 → `text`;
+  3. **渲染**:`scripts/animate_sticker.py cat.png --recipe happy --out cat_happy.gif`
+- 9 个情绪配方:`happy`(蓄力蹲→弹跳→落地压扁→回弹呼吸+★星星)/ `angry`(高频震动+💢)/ `sad`(慢垂+💧)/ `surprised`(过冲回弹+!)/ `shy`(慢摇+💗)/ `speechless`(近静止+…💧)/ `sleepy`(呼吸+Zzz)/ `neutral`(待机呼吸)/ `text`(整体强调脉冲)。
+- 引擎要点:缓动曲线(禁线性)、多段相位、挤压拉伸守恒、**不等帧时长**(关键姿势停留更久)、程序化粒子(颜色自动取主体主色)、f(0)=f(1) 无缝循环、体积超限自动降色/抽帧。
+- 兼容 v1 动效名:`--anim bounce/shake/pulse/wobble` 自动映射配方;`--list` 查看全部配方。
 - 进阶可选(消耗积分):更丰富动作用宿主生图工具逐帧图生图(WorkBuddy `ImageGen` 每帧 5–10 credits)再本地合成,需注意帧间一致性;不推荐视频转 GIF 路线(50–100 credits/条 + 逐帧去底闪烁问题)。
 
 ## 规则更新与退出机制(规则持续维护的核心)
@@ -105,6 +109,7 @@ agent_created: true
 ## References(持续维护,单独更新)
 - `references/中文平台表情包尺寸规范.md` — 各平台尺寸 / 格式 / 上限 / 背景 / 成套要求 + status 生命周期 + 源 URL。
 - `references/中文平台违禁词合规参考.md` — 违禁词类别、权威来源、平台专属敏感点、通用极限词种子集。**实际校验优先复用 `multi-wordcheck`,本文件仅兜底。**
+- `references/动效匹配规则.md` — 情绪×主体 → 动效配方匹配表 + 粒子符号表 + 兜底规则。新增情绪配方先在此登记(`pending-verify`),POC 验证后转 `active`。
 
 ## Hard rules
 - 微信主图 / 图标 / 封面必须**透明底**,白边会被驳回;详情页横幅**禁透明底、禁纯白底**(用脚本 `--wechat` 默认浅灰底)。
@@ -122,8 +127,9 @@ python3 scripts/resize_stickers.py ./raw --wechat --out ./wechat_pack --zip --ma
 # 单尺寸批量(命名 01.png…24.png)
 python3 scripts/resize_stickers.py ./raw --size 240x240 --bg transparent --format png --out ./out --zip
 
-# 静态贴纸 → 动画 GIF(零积分)
-python3 scripts/animate_sticker.py cat.png --anim bounce --out cat_bounce.gif
+# 静态贴纸 → 内容匹配动效 GIF(零积分;先看图判情绪,再按 references/动效匹配规则.md 选配方)
+python3 scripts/animate_sticker.py cat.png --recipe happy --out cat_happy.gif
+python3 scripts/animate_sticker.py --list   # 查看全部配方
 
 # 文案离线违禁词校验(兜底;正式发布前仍优先 multi-wordcheck)
 python3 scripts/check_compliance.py "全网最低价,加微信详聊" --platform xiaohongshu douyin
