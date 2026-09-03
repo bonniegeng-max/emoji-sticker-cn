@@ -36,6 +36,8 @@ git clone https://github.com/bonniegeng-max/emoji-sticker-cn.git
 
 依赖:`pip install Pillow`(裁切 / 动画脚本)。
 
+> 外挂依赖说明:脚本层的硬依赖仅 Pillow。**实时**违禁词校验是可选外挂——宿主环境装有 `multi-wordcheck` 类 skill 时自动优先调用;未安装则自动降级为脚本内置的离线种子集兜底(非实时,会向用户提示局限)。生图复用宿主环境自带的文生图/图生图工具,本 skill 不自带。
+
 ## 使用
 
 对宿主 agent 说:
@@ -64,9 +66,13 @@ python3 scripts/resize_stickers.py ./raw --size 240x240 --format png --out ./out
 python3 scripts/animate_sticker.py cat.png --recipe happy --out cat_happy.gif
 python3 scripts/animate_sticker.py --list   # 查看全部配方
 
-# 文案离线违禁词校验(兜底;正式发布前优先 multi-wordcheck)
+# 文案离线违禁词校验(兜底;正式发布前仍优先 multi-wordcheck)
 python3 scripts/check_compliance.py "全网最低价,加微信详聊" --platform xiaohongshu douyin
 ```
+
+## 产物样张
+
+> 待补充：此处放 2–3 张真实贴纸产物图（历史 demo 在 WorkBuddy projects/archive/sticker demo，本机已归档于 `projects/archive/2026-08-25-09-45-19/sticker-demo`），建议含一张过审/发布截图。当前刻意不放占位图，避免冒充真实产物。
 
 ## 目录
 

@@ -1,7 +1,7 @@
 ---
 name: emoji-sticker-cn
-description: This skill should be used when the user wants to create Chinese-platform compliant emoji/sticker packs (微信表情开放平台 / 小红书 / 抖音), covering image generation, platform-specific resizing and cropping, sequential naming, upload metadata, and sensitive-word compliance checks. It fills the gap that most emoji skills ignore Chinese platform specs and content compliance. Also triggers on 更新表情包规则 / 巡检表情包规范 to run the rule-inspection workflow.
-version: 3.0.0
+description: 面向中文平台（微信表情开放平台 / 小红书 / 抖音）的合规表情包/贴纸生成助手：尺寸硬约束 + 违禁词校验 + 动效 GIF。把一张图或一段描述变成可直接上架或发布的表情包——覆盖平台规格裁切与命名、上架元数据、实时/离线违禁词合规检查、静态贴纸转内容匹配动效 GIF，并可巡检更新平台规范。核心触发词：表情包、贴纸、微信表情上架、动态表情、sticker、emoji；另支持「更新表情包规则」「巡检表情包规范」的规则巡检工作流。
+version: 3.0.1
 license: MIT
 trigger: "表情包|贴纸|表情上架|动态表情|GIF表情|更新表情包规则|巡检表情包规范"
 agent_created: true
