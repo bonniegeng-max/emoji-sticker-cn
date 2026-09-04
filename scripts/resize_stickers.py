@@ -6,10 +6,10 @@
       平台尺寸规范以 emoji-sticker-cn/references/中文平台表情包尺寸规范.md 为准(单一事实源)。
 
 用法:
-  # 单尺寸批量处理:主图 240x240(保持源图透明状态,照片型可不透明),命名 01.png…24.png
-  python3 resize_stickers.py ./raw --size 240x240 --bg keep --format png --out ./wechat --zip
+  # 单尺寸批量处理:主图 240x240 透明底,命名 01.png…24.png
+  python3 resize_stickers.py ./raw --size 240x240 --bg transparent --format png --out ./wechat --zip
 
-  # 微信七件套一次生成(主图/图标/封面/横幅/缩略图/赞赏引导图/致谢图,自动建目录)
+  # 微信五件套一次生成(主图/图标/封面/横幅/缩略图,自动建目录)
   python3 resize_stickers.py ./raw --wechat --out ./wechat_pack --zip
 
   # 自定义前缀 + 非透明底(横幅场景)
@@ -31,20 +31,13 @@ except ImportError:
 LANCZOS = Resampling.LANCZOS
 BICUBIC = Resampling.BICUBIC
 
-# 微信表情开放平台七件套规范(单一事实源: references/中文平台表情包尺寸规范.md)
-# bg 语义: "keep"=保持源图透明状态(主图:官方不强制透明,照片型合法)
-#         "transparent"=强制透明底(封面/图标/缩略图:官方明文「须设置为透明背景」)
-#         "#hex"=不透明底色(横幅/赞赏图:官方明文「避免使用透明背景」,横幅另禁纯白)
-# per 语义: "each"=每张源图各一份(主图,与表情一一对应)
-#          "one"=专辑级资产只出一份(取第一张源图):图标/封面/横幅/缩略图/赞赏图
+# 微信表情开放平台五件套规范(单一事实源: references/中文平台表情包尺寸规范.md)
 WECHAT_ASSETS = [
-    ("主图", "240x240", "png", "keep", "each"),
-    ("聊天面板图标", "50x50", "png", "transparent", "one"),
-    ("封面图", "240x240", "png", "transparent", "one"),
-    ("详情页横幅", "750x400", "png", "#F2F3F5", "one"),  # 禁透明底、禁纯白底
-    ("缩略图", "120x120", "png", "transparent", "one"),
-    ("赞赏引导图", "750x560", "png", "#F2F3F5", "one"),  # 避免透明背景
-    ("赞赏致谢图", "750x750", "png", "#F2F3F5", "one"),  # 避免透明背景
+    ("主图", "240x240", "png", "transparent"),
+    ("聊天面板图标", "50x50", "png", "transparent"),
+    ("封面图", "240x240", "png", "transparent"),
+    ("详情页横幅", "750x400", "png", "#F2F3F5"),  # 禁纯白底,给浅灰底
+    ("缩略图", "120x120", "png", "transparent"),
 ]
 
 INPUT_EXTS = (".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp")
@@ -69,9 +62,8 @@ def hex_bg(hex_color: str):
 
 
 def make_bg(w, h, bg):
-    """生成画布:keep/transparent → RGBA 全透明(保持源图状态);
-    white/black 或 #hex → 不透明纯色。"""
-    if bg in ("keep", "transparent"):
+    """生成画布:transparent → RGBA 全透明;white/black 或 #hex → 不透明纯色。"""
+    if bg == "transparent":
         return Image.new("RGBA", (w, h), (0, 0, 0, 0))
     if bg == "white":
         return Image.new("RGBA", (w, h), (255, 255, 255, 255))
@@ -143,7 +135,7 @@ def save_frame(canvas, out_path, fmt, bg):
     elif fmt == "gif":
         rgba_to_p(canvas).save(out_path, "GIF", transparency=255, disposal=2)
     elif fmt == "webp":
-        canvas.save(out_path, "WEBP", quality=90, lossless=bg in ("keep", "transparent"))
+        canvas.save(out_path, "WEBP", quality=90, lossless=(bg == "transparent"))
     else:  # png
         canvas.save(out_path, "PNG", optimize=True)
 
@@ -162,16 +154,16 @@ def main():
     ap = argparse.ArgumentParser(description="表情包批量裁切/缩放/命名/打包")
     ap.add_argument("input", help="原图文件或目录")
     ap.add_argument("--size", help="目标尺寸,如 240x240(--wechat 时忽略)")
-    ap.add_argument("--bg", default="keep",
-                    help="背景: keep(默认,保持源图透明状态)/ transparent / white / black / #RRGGBB;主图官方不强制透明(照片型合法),封面/图标须透明")
+    ap.add_argument("--bg", default="transparent",
+                    help="背景: transparent / white / black / #RRGGBB,默认 transparent")
     ap.add_argument("--format", dest="fmt", choices=["png", "jpg", "gif", "webp"], default="png")
     ap.add_argument("--prefix", default="", help="输出文件名前缀(默认空,直接 01.png…24.png,对齐微信规范)")
     ap.add_argument("--start", type=int, default=1, help="起始序号,默认 1")
     ap.add_argument("--pad", type=int, default=2, help="序号位宽,默认 2(01,02…)")
     ap.add_argument("--fit", choices=["contain", "cover"], default="contain",
                     help="contain=等比缩放留边(默认);cover=裁切填满")
-    ap.add_argument("--wechat", action="store_true", help="微信七件套预设(主图/图标/封面/横幅/缩略图/赞赏引导图/致谢图)")
-    ap.add_argument("--banner-bg", default="#F2F3F5", help="微信横幅/赞赏图底色(禁纯白禁透明),默认浅灰 #F2F3F5")
+    ap.add_argument("--wechat", action="store_true", help="微信五件套预设(主图/图标/封面/横幅/缩略图)")
+    ap.add_argument("--banner-bg", default="#F2F3F5", help="微信横幅底色(禁纯白),默认浅灰 #F2F3F5")
     ap.add_argument("--out", default="./out", help="输出目录")
     ap.add_argument("--zip", action="store_true", help="额外打包成 ZIP")
     ap.add_argument("--max-kb", type=int, default=0, help="单文件体积上限 KB,超限警告并返回退出码 3")
@@ -184,10 +176,10 @@ def main():
         sys.stderr.write("必须提供 --size 或 --wechat\n")
         sys.exit(2)
 
-    # 微信七件套计划(横幅/赞赏图底色可用 --banner-bg 覆盖,默认浅灰而非纯白)
+    # 微信五件套计划(横幅底色可用 --banner-bg 覆盖,默认浅灰而非纯白)
     wechat_assets = [
-        (n, s, f, args.banner_bg if b.startswith("#") else b, per)
-        for n, s, f, b, per in WECHAT_ASSETS
+        (n, s, f, args.banner_bg if n == "详情页横幅" else b)
+        for n, s, f, b in WECHAT_ASSETS
     ]
 
     size = None if args.wechat else parse_size(args.size)
@@ -201,12 +193,11 @@ def main():
     total = 0
     zip_list = []
 
-    def run_batch(out_dir, size_, bg_, fmt_, prefix_, per="each"):
+    def run_batch(out_dir, size_, bg_, fmt_, prefix_):
         nonlocal total
         os.makedirs(out_dir, exist_ok=True)
         paths = []
-        batch_files = files if per == "each" else files[:1]  # 专辑级资产只取第一张
-        for i, fp in enumerate(batch_files, args.start):
+        for i, fp in enumerate(files, args.start):
             out_name = f"{prefix_}{i:0{args.pad}d}.{fmt_}"
             out_path = os.path.join(out_dir, out_name)
             is_gif = fp.lower().endswith(".gif") and fmt_ == "gif"
@@ -222,11 +213,10 @@ def main():
         return paths
 
     if args.wechat:
-        for name, size_, fmt_, bg_, per in wechat_assets:
+        for name, size_, fmt_, bg_ in wechat_assets:
             out_dir = os.path.join(args.out, name)
-            kind_note = "每张一份" if per == "each" else "专辑级 1 张"
-            print(f"── {name} ({size_}, {bg_}, {kind_note})")
-            paths = run_batch(out_dir, parse_size(size_), bg_, fmt_, args.prefix, per)
+            print(f"── {name} ({size_}, {bg_})")
+            paths = run_batch(out_dir, parse_size(size_), bg_, fmt_, args.prefix)
             if args.zip:
                 zf = os.path.join(out_dir, f"{name}.zip")
                 with zipfile.ZipFile(zf, "w", zipfile.ZIP_DEFLATED) as z:
