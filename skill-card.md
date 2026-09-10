@@ -1,6 +1,6 @@
 ## Description:
 
-This skill helps agents create Chinese-platform compliant emoji and sticker packs for WeChat Sticker Open Platform, Xiaohongshu, and Douyin by guiding image generation, platform-specific resizing and cropping, sequential naming, upload metadata preparation, and sensitive-word compliance checks.
+This skill helps agents create Chinese-platform compliant emoji and sticker packs for WeChat Sticker Open Platform, Xiaohongshu, and Douyin by guiding image generation, platform-specific resizing and cropping, sequential naming, asset machine-checking (size/format/size-limit/alpha/white-fringe/similarity), submission checklist generation, and sensitive-word compliance checks.
 
 This skill is ready for commercial/non-commercial use.
 
@@ -56,7 +56,7 @@ Mitigation: Prefer the host's real-time multi-wordcheck workflow when available 
 
 ## Skill Version(s):
 
-1.2.0 (source: frontmatter and server release metadata)
+1.3.0 (source: frontmatter and server release metadata)
 
 ## Ethical Considerations:
 
