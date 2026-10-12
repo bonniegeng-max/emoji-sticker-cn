@@ -31,7 +31,7 @@ GitHub / ClawHub 上的表情包 skill 大多只管「生成」,普遍忽略两�
 npx clawhub@latest install emoji-sticker-cn
 
 # 或从 GitHub 克隆到你的 skills 目录（钉到稳定 tag）
-git clone --branch v3.1.5 https://github.com/bonniegeng-max/emoji-sticker-cn.git
+git clone --branch v3.1.6 https://github.com/bonniegeng-max/emoji-sticker-cn.git
 ```
 
 依赖:`pip install Pillow`(裁切 / 动画脚本)。
