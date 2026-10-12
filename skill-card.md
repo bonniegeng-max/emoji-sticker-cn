@@ -39,7 +39,7 @@ Mitigation: Prefer the host's real-time multi-wordcheck workflow when available 
 - [Chinese Platform Sticker Size Reference](references/中文平台表情包尺寸规范.md)
 - [Chinese Platform Prohibited Words Compliance Reference](references/中文平台违禁词合规参考.md)
 - [WeChat Sticker Open Platform Guide](https://sticker.weixin.qq.com/cgi-bin/mmemoticon-bin/readtemplate?t=guide/index.html)
-- [QQ Original Gallery Design Rules](https://yuanchuang.qq.com/html/design_rule.html)
+- [QQ Original Gallery Design Rules](https://yuanchuang.qq.com/html/design_rule.html) (domain deregistered 2026-09-16, platform likely defunct — QQ specs deprecated)
 - [Feishu Sticker Help Center](https://feishu.cn/hc/zh-CN/articles/360049068046)
 - [WeChat Public Platform Operations Specification](https://fuwu.weixin.qq.com/community/develop/article/doc/000a46f78684f8b21d903690460013)
 - [Douyin Community Rules](https://www.douyin.com/rule/policy)

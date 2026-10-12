@@ -30,8 +30,8 @@ GitHub / ClawHub 上的表情包 skill 大多只管「生成」,普遍忽略两�
 # ClawHub (OpenClaw)
 npx clawhub@latest install emoji-sticker-cn
 
-# 或从 GitHub 克隆到你的 skills 目录
-git clone https://github.com/bonniegeng-max/emoji-sticker-cn.git
+# 或从 GitHub 克隆到你的 skills 目录（钉到稳定 tag）
+git clone --branch v3.1.5 https://github.com/bonniegeng-max/emoji-sticker-cn.git
 ```
 
 依赖:`pip install Pillow`(裁切 / 动画脚本)。
@@ -79,7 +79,7 @@ python3 scripts/check_compliance.py "全网最低价,加微信详聊" --platform
 ```
 ├── SKILL.md                                  # 工作流 + 硬约束 + 更新/退出机制
 ├── references/
-│   ├── 中文平台表情包尺寸规范.md              # 微信/QQ/飞书官方核实 + 内联平台标注(持续维护)
+│   ├── 中文平台表情包尺寸规范.md              # 微信/飞书官方核实 + QQ已退出留痕 + 内联平台标注(持续维护)
 │   ├── 中文平台违禁词合规参考.md              # 类别体系 + 权威来源 + 极限词种子集(持续维护)
 │   ├── 微信表情审核标准与高频拒因.md          # 高频拒因清单 / 审核红线 / IP 形象约束 / 付费表情
 │   └── 动效匹配规则.md                        # 情绪×主体 → 动效配方匹配表 + 粒子符号表(路线 D)
