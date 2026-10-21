@@ -97,6 +97,17 @@ python3 scripts/check_compliance.py "全网最低价,加微信详聊" --platform
 
 > 免责:平台规范随时可能调整,上架前请以官方开放平台当日页面为准。
 
+## ClawHub 发布记录
+
+> `--name` / `--topics` 等 ClawHub 元数据**只存在于发布命令参数中,不在文件里**——每次发版须带上,否则回落为默认值。
+
+| 版本 | 日期 | 内容 | 发布命令元数据参数 |
+|---|---|---|---|
+| 3.1.7 | 2026-10-12 | 可发现性优化(内容零变更):displayName 去「微信」限定、topics 换中文长尾 | `--name "表情包 · Emoji Sticker" --topics 表情包,微信表情,贴纸,表情动图,合规` |
+| 3.1.6 | 2026-10-12 | 违禁词参考 v1.5(金融营销专项)+ 补录 9 月漏提交改动 | 未记录(3.1.7 前的 displayName 为微信限定旧名) |
+
+完整发布流程(含验证 moderation clean)见 SKILL.md「规则更新与退出机制」;历史版本见 git tags。
+
 ## License
 
 [MIT](./LICENSE)

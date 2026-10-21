@@ -1,7 +1,7 @@
 ---
 name: emoji-sticker-cn
 description: 中文平台(微信表情开放平台 / 小红书 / 抖音)合规表情包生成助手。提供平台尺寸硬约束裁切与命名、违禁词校验(实时 API + 离线兜底)、静态贴纸转内容匹配动效 GIF、合规参考数据维护与平台规范规则巡检工作流。Compliance-focused Chinese-platform emoji sticker assistant: platform size constraints & naming, prohibited-word checks (live API + offline fallback), content-matched animated GIFs, compliance reference maintenance, and platform-rule patrol workflow.
-version: 3.1.6
+version: 3.1.7
 license: MIT
 trigger: "微信表情上架|微信表情包|微信表情开放平台|小红书表情包|抖音表情|中文表情合规模板"
 agent_created: true
