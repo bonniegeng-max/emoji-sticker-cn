@@ -69,8 +69,8 @@ def main():
     cover = find(d, "封面图/*.png")
     icon = find(d, "聊天面板图标/*.png")
     banner = find(d, "详情页横幅/*.png", "详情页横幅/*.jpg")
-    guide = find(d, "赞赏引导图/*.png", "赞赏引导图/*.jpg", "赞赏引导图/*.gif")
-    thanks = find(d, "赞赏致谢图/*.png", "赞赏致谢图/*.jpg", "赞赏致谢图/*.gif")
+    guide = find(d, "赞赏引导图/*.png", "赞赏引导图/*.gif")
+    thanks = find(d, "赞赏致谢图/*.png", "赞赏致谢图/*.gif")
 
     rows = "\n".join(
         f"| {i} | `主图/{f}` | {meanings[i - 1] if i <= len(meanings) else '⚠️ 待填'} |"

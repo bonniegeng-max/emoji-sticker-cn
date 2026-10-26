@@ -9,7 +9,8 @@
 
 检查项:
   1. 尺寸 / 格式 / 体积 / 张数(主图 8-24,单品 1)
-  2. 透明底: 封面/图标/缩略图必须透明(FAIL);横幅/赞赏图禁透明(FAIL);
+  2. 透明底: 封面/图标必须透明(FAIL);横幅/赞赏图官方用「避免」非禁止
+     → 仅 WARN(2026-10-26 对齐官方原文: 避免使用透明背景);
      主图不强制透明(照片型合法,插画型建议透明 → 仅 WARN)
   3. 白描边: 轮廓明显比主体内部更白 → WARN(官方:形象不应有白色描边)
   4. 整套差异: 主图两两差分哈希(dhash)汉明距离过小 → FAIL(官方明文第一大拒因)
@@ -22,7 +23,7 @@
   python3 check_assets.py ./wechat_pack --json               # 机器可读输出
 
 目录结构需与 resize_stickers.py --wechat 输出一致:
-  主图/ 聊天面板图标/ 封面图/ 详情页横幅/ 缩略图/ 赞赏引导图/ 赞赏致谢图/
+  主图/ 聊天面板图标/ 封面图/ 详情页横幅/ 赞赏引导图/ 赞赏致谢图/
 """
 import argparse
 import glob
@@ -37,15 +38,17 @@ except ImportError:
     sys.exit(2)
 
 # ---- 官方规格(references 尺寸规范) ----
-# alpha: "must"=官方明文须透明→FAIL; "prefer"=未强制但插画型建议→WARN; "no"=明文避免透明→FAIL
+# alpha: "must"=官方明文须透明→FAIL; "prefer"=未强制但插画型建议→WARN;
+#        "no"=官方明文「避免」透明→WARN(不是禁止,2026-10-26 按官方原文降级)
 SPEC = {
     "主图":      {"size": (240, 240), "max_kb": 500, "fmt": ("PNG", "JPEG", "GIF"), "alpha": "prefer", "count": (1, 24)},
     "聊天面板图标": {"size": (50, 50),   "max_kb": 100, "fmt": ("PNG",),             "alpha": "must"},
     "封面图":    {"size": (240, 240), "max_kb": 500, "fmt": ("PNG",),             "alpha": "must"},
     "详情页横幅":  {"size": (750, 400), "max_kb": 500, "fmt": ("PNG", "JPEG"),        "alpha": "no"},
-    "缩略图":    {"size": (120, 120), "max_kb": 200, "fmt": ("PNG",),             "alpha": "must", "alt_size": (240, 240)},
-    "赞赏引导图":  {"size": (750, 560), "max_kb": 500, "fmt": ("PNG", "JPEG", "GIF"), "alpha": "no"},
-    "赞赏致谢图":  {"size": (750, 750), "max_kb": 500, "fmt": ("PNG", "JPEG", "GIF"), "alpha": "no"},
+    # 「缩略图」已于 v3.1.9 删除: 官方素材总表(4 项)不含此项,官方全文仅在赞赏开通
+    # 条件里出现名词「赞赏缩略图」且无任何规格 → 无出处,不再产出/不再校验。
+    "赞赏引导图":  {"size": (750, 560), "max_kb": 500, "fmt": ("PNG", "GIF"),         "alpha": "no"},
+    "赞赏致谢图":  {"size": (750, 750), "max_kb": 500, "fmt": ("PNG", "GIF"),         "alpha": "no"},
 }
 PUNCT = set("，。！？、；：""''（）()【】《》<>…—·~!?,.:;'\"[]{}|-_=+/\\@$%^&*#`")
 
@@ -167,6 +170,7 @@ def check_kind(root, kind, rep, dhashes):
             rep.fail(kind, f"张数 {n} 不在 8-24 范围(单品请只放 1 张)")
 
     sizes = set()
+    fails_before = rep.fails   # v3.1.9: 本类逐图检查前的 FAIL 数,用于防止「既 FAIL 又 OK」
     for f in files:
         path = os.path.join(d, f)
         try:
@@ -198,7 +202,7 @@ def check_kind(root, kind, rep, dhashes):
             if alpha_spec == "must" and t < 0.05:
                 rep.fail(f"{kind}/{f}", "不透明(官方明文须透明背景)")
             elif alpha_spec == "no" and t > 0.05:
-                rep.fail(f"{kind}/{f}", "透明背景(官方明文避免使用)")
+                rep.warn(f"{kind}/{f}", "透明背景(官方用「避免」非禁止;确认底色与微信底可区分)")
             elif alpha_spec == "prefer" and t < 0.05:
                 rep.warn(f"{kind}/{f}", "不透明(照片型合法;插画型建议透明)")
 
@@ -218,7 +222,9 @@ def check_kind(root, kind, rep, dhashes):
             if ".gif" in kinds and len(kinds) > 1:
                 rep.fail(kind, "混有 GIF 与静态图(官方:同一套须统一动态或静态)")
 
-    if len(sizes) == 1:
+    # v3.1.9: 只有本类零 FAIL 才打 OK——旧版只看 sizes 是否唯一,
+    # 导致「格式错但尺寸对」的图同时出现 [✗ FAIL] 和 [✓ OK],会误导 agent 放过问题。
+    if len(sizes) == 1 and rep.fails == fails_before:
         rep.ok(kind, f"{len(files)} 张,尺寸/体积/格式合规")
     return files
 

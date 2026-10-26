@@ -1,3 +1,19 @@
+## 商店摘要（ClawHub `summary` 字段 · 2026-10-26 重写，发布时必须带上）
+
+> 旧摘要为 `Designs three emoji sticker concepts from a user-provided theme, phrase, or character...` —— 那是 3.1.2「单文件概念版」时期留下的，与现行交付物（合规流水线 + 5 脚本 + 5 篇规范）不符，是检索已排第 1 但 install 仍为 1 的可疑断点。**下次发布用下面这段替换。**
+
+**中文（主）**：
+
+```
+中文表情包合规流水线：一张图 → 微信表情上架。硬约束裁切（240×240 主图 / 50×50 图标 / 750×400 横幅）、素材机检（尺寸·格式·体积·透明底·整套差异度）、9 情绪动效 GIF、违禁词校验、平台规范巡检。做表情包 / 微信表情上架 / 贴纸动图时使用。
+```
+
+**English（副）**：
+
+```
+Turns one image into a submission-ready WeChat sticker pack: hard-limit resizing, asset lint (size / format / alpha / similarity), 9-emotion animated GIF, banned-word checks, and platform-rule patrol.
+```
+
 ## Description:
 
 This skill helps agents create Chinese-platform compliant emoji and sticker packs for WeChat Sticker Open Platform, Xiaohongshu, and Douyin by guiding image generation, platform-specific resizing and cropping, sequential naming, asset machine-checking (size/format/size-limit/alpha/white-fringe/similarity), submission checklist generation, and sensitive-word compliance checks.
@@ -56,7 +72,7 @@ Mitigation: Prefer the host's real-time multi-wordcheck workflow when available 
 
 ## Skill Version(s):
 
-1.3.0 (source: frontmatter and server release metadata)
+3.2.0 (source: `SKILL.md` frontmatter + `_meta.json`; 三者须一致，2026-10-26 对齐)
 
 ## Ethical Considerations:
 

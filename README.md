@@ -17,7 +17,8 @@ GitHub / ClawHub 上的表情包 skill 大多只管「生成」,普遍忽略两�
   - B 小红书 / 抖音内联表情(笔记配图 / 聊天表情)
   - C 已有图片批量裁切 + 规范命名 + ZIP 打包
   - D **内容匹配动效 GIF——看图判情绪,自动配动效(9 情绪配方 + 程序化粒子 + 缓动曲线),零 API 成本**,自动控体积 ≤500KB
-- **一键七件套**:`--wechat` 预设一次生成主图 / 聊天图标 / 封面 / 横幅 / 缩略图 / 赞赏引导图 / 致谢图,自动建目录、规范命名、体积校验
+- **一键出可自动派生的 4 类素材**:`--wechat` 预设一次生成主图 / 聊天图标 / 封面 / 横幅,自动建目录、规范命名、体积校验(赞赏引导图 / 致谢图脚本不生成——官方要求风格须与表情一致,机械派生不合格,需自行制作)
+- **赞赏两图有路线，不只「自己看着办」**:引导图 / 致谢图走 `SKILL.md`「路线 A+」——复用或反推 style-card → 角色锚定 → ImageGen 出图 → 人工看图 + 机检;只在开通赞赏(需微信支付商户号)时才走,不塞进主流程
 - **素材机检 `check_assets.py`**:尺寸/格式/体积/透明底分级判定(封面/图标必须透明,主图照片型合法)、白描边检测、整套 dhash 查重(第一拒因「整套差异不足」)、含义词校验;FAIL/WARN/OK 三级,退出码 = FAIL 数
 - **提交清单 `make_submit.py`**:机检通过后生成「字段→值/文件」对照的 submit.md,上架照抄不猜编号
 - **内容匹配动效引擎**:`animate_sticker.py` 内置 9 个情绪配方(happy/angry/sad/surprised/shy/speechless/sleepy/neutral/text),程序化粒子(★💢💧💗Zzz!… 零素材),缓动曲线 + 不等帧时长 + 无缝循环;`references/动效匹配规则.md` 提供情绪×主体→配方的 L2 匹配表,v1 动效名自动映射
@@ -31,7 +32,7 @@ GitHub / ClawHub 上的表情包 skill 大多只管「生成」,普遍忽略两�
 npx clawhub@latest install emoji-sticker-cn
 
 # 或从 GitHub 克隆到你的 skills 目录（钉到稳定 tag）
-git clone --branch v3.1.6 https://github.com/bonniegeng-max/emoji-sticker-cn.git
+git clone --branch v3.1.8 https://github.com/bonniegeng-max/emoji-sticker-cn.git
 ```
 
 依赖:`pip install Pillow`(裁切 / 动画脚本)。
@@ -50,7 +51,8 @@ git clone --branch v3.1.6 https://github.com/bonniegeng-max/emoji-sticker-cn.git
 脚本直用:
 
 ```bash
-# 微信七件套:主图/图标/封面/横幅/缩略图/赞赏引导图/致谢图一次生成 + 规范命名 + 打包 + 体积校验
+# 微信 4 类可派生素材:主图/图标/封面/横幅一次生成 + 规范命名 + 打包 + 体积校验
+# (赞赏引导图/致谢图需自行制作;「缩略图」无官方出处,已于 v3.1.9 移除)
 python3 scripts/resize_stickers.py ./raw --wechat --out ./wechat_pack --zip --max-kb 500
 
 # 素材机检(上架前必跑,FAIL 必须清零;退出码 = FAIL 数)
@@ -78,13 +80,16 @@ python3 scripts/check_compliance.py "全网最低价,加微信详聊" --platform
 
 ```
 ├── SKILL.md                                  # 工作流 + 硬约束 + 更新/退出机制
+├── AGENTS.md                                 # 给 AI 助手的工作守则（改代码前的红线）
+├── llms.txt                                  # 给外部 AI 的仓库说明（何时推荐 / 怎么装 / 去哪改）
 ├── references/
 │   ├── 中文平台表情包尺寸规范.md              # 微信/飞书官方核实 + QQ已退出留痕 + 内联平台标注(持续维护)
 │   ├── 中文平台违禁词合规参考.md              # 类别体系 + 权威来源 + 极限词种子集(持续维护)
 │   ├── 微信表情审核标准与高频拒因.md          # 高频拒因清单 / 审核红线 / IP 形象约束 / 付费表情
-│   └── 动效匹配规则.md                        # 情绪×主体 → 动效配方匹配表 + 粒子符号表(路线 D)
+│   ├── 动效匹配规则.md                        # 情绪×主体 → 动效配方匹配表 + 粒子符号表(路线 D)
+│   └── 静态姿势动作库.md                      # 意图×变体 → 姿势/表情/场景 + prompt_en(生成前「四步定姿势」)
 └── scripts/
-    ├── resize_stickers.py                    # 批量裁切 / 命名 / ZIP / 微信七件套
+    ├── resize_stickers.py                    # 批量裁切 / 命名 / ZIP / 微信预设
     ├── check_assets.py                       # 素材机检(尺寸/透明底/白描边/dhash 查重/含义词)
     ├── make_submit.py                        # 生成 submit.md 提交清单(字段→值/文件对照)
     ├── animate_sticker.py                    # 内容匹配动效引擎(9 情绪配方 + 程序化粒子)
@@ -97,12 +102,16 @@ python3 scripts/check_compliance.py "全网最低价,加微信详聊" --platform
 
 > 免责:平台规范随时可能调整,上架前请以官方开放平台当日页面为准。
 
-## ClawHub 发布记录
+## ClawHub / 元数据记录
 
-> `--name` / `--topics` 等 ClawHub 元数据**只存在于发布命令参数中,不在文件里**——每次发版须带上,否则回落为默认值。
+> **元数据真源已改为 `_meta.json`**（2026-10-26 起）：`version` / `displayName` / `topics` / `summary` 全部写进文件，不再只存在于发布命令参数里——之前正是因为只在命令行传，仓库 `_meta.json` 一直停在 `3.0.0`，导致版本号四处打架。
+> 发布时仍以命令行参数为准（覆盖文件值），两边必须同步改。
 
-| 版本 | 日期 | 内容 | 发布命令元数据参数 |
+| 版本 | 日期 | 内容 | 元数据变更 |
 |---|---|---|---|
+| **3.2.0** | **2026-10-26** | **新增「路线 A+」：赞赏引导图 / 致谢图怎么出**（文档级，零代码变更）。①说明脚本为何不出这两张（contain 贴合违反官方 ④相关内容 / ⑤背景区分）②三条出图路径，优先复用 style-card 已有卡、其次反推入库（资产沉淀）③**角色锚定警告**：style-card 保配色构图、不保主体身份，必须把角色描述搬进内容槽位，否则撞第 ④ 条拒因④规格与验收表（含「机检判不了语义，必须人工看图」）⑤红线：不许把生成逻辑塞进 `resize_stickers.py`。同步 references / llms.txt / AGENTS.md | 无元数据变更 |
+| 3.1.9 | 2026-10-26 | **删除虚构的「缩略图」**：官方素材总表 4 项不含此项，官方全文「缩略」仅 2 处且为赞赏开通条件名词「赞赏缩略图」、无任何规格 → 无出处，从 SKILL/SPEC/resize/README/llms 全部移除（references 标 deprecated 留痕）；**「七件套」口径改为事实描述**（官方 6 项 = 4 项素材 + 赞赏 2 图，脚本自动产出 4 项，赞赏两图需自备）；修机检「同一图既 FAIL 又 OK」的误导性汇总 | 无元数据变更（沿用 3.1.8 的 displayName/topics/summary） |
+| 3.1.8 | 2026-10-26 | **对齐官方原文**：①赞赏引导图/致谢图格式改 `PNG/GIF`（去掉 JPG，官方原文无 JPG）②横幅/赞赏图/致谢图透明度由「禁」改回官方措辞「**避免**」，机检 FAIL→WARN ③版本真源统一 `_meta.json` ④trigger 补裸词（表情包/做表情/贴纸/含义词/赞赏引导图/特效/表情形象…）⑤新增 `llms.txt` + `AGENTS.md` ⑥references 新增「巡检机制」节（构建号闸门，省掉无效全文比对） | `--name "表情包 · Emoji Sticker" --topics 表情包,微信表情,贴纸,表情动图,合规 --summary "<见 skill-card.md>"` |
 | 3.1.7 | 2026-10-12 | 可发现性优化(内容零变更):displayName 去「微信」限定、topics 换中文长尾 | `--name "表情包 · Emoji Sticker" --topics 表情包,微信表情,贴纸,表情动图,合规` |
 | 3.1.6 | 2026-10-12 | 违禁词参考 v1.5(金融营销专项)+ 补录 9 月漏提交改动 | 未记录(3.1.7 前的 displayName 为微信限定旧名) |
 

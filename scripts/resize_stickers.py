@@ -9,7 +9,8 @@
   # 单尺寸批量处理:主图 240x240 透明底,命名 01.png…24.png
   python3 resize_stickers.py ./raw --size 240x240 --bg transparent --format png --out ./wechat --zip
 
-  # 微信五件套一次生成(主图/图标/封面/横幅/缩略图,自动建目录)
+  # 微信四件套一次生成(主图/图标/封面/横幅,自动建目录)
+  # (赞赏引导图/致谢图需自行制作:官方要求风格须与表情一致,机械派生不合格)
   python3 resize_stickers.py ./raw --wechat --out ./wechat_pack --zip
 
   # 自定义前缀 + 非透明底(横幅场景)
@@ -31,13 +32,15 @@ except ImportError:
 LANCZOS = Resampling.LANCZOS
 BICUBIC = Resampling.BICUBIC
 
-# 微信表情开放平台五件套规范(单一事实源: references/中文平台表情包尺寸规范.md)
+# 微信表情开放平台「可自动派生」的四类素材(单一事实源: references/中文平台表情包尺寸规范.md)
+# 说明: 官方素材总表只有 4 项(表情图/横幅/封面/图标)+ 赞赏 2 图。
+#       「缩略图」无官方出处(全文仅赞赏开通条件里出现名词「赞赏缩略图」,无规格),v3.1.9 已删除。
+#       赞赏引导图/致谢图官方要求「风格须与表情一致」,机械派生不合格,故不在此生成。
 WECHAT_ASSETS = [
     ("主图", "240x240", "png", "transparent"),
     ("聊天面板图标", "50x50", "png", "transparent"),
     ("封面图", "240x240", "png", "transparent"),
     ("详情页横幅", "750x400", "png", "#F2F3F5"),  # 禁纯白底,给浅灰底
-    ("缩略图", "120x120", "png", "transparent"),
 ]
 
 INPUT_EXTS = (".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp")
@@ -162,7 +165,7 @@ def main():
     ap.add_argument("--pad", type=int, default=2, help="序号位宽,默认 2(01,02…)")
     ap.add_argument("--fit", choices=["contain", "cover"], default="contain",
                     help="contain=等比缩放留边(默认);cover=裁切填满")
-    ap.add_argument("--wechat", action="store_true", help="微信五件套预设(主图/图标/封面/横幅/缩略图)")
+    ap.add_argument("--wechat", action="store_true", help="微信四件套预设(主图/图标/封面/横幅)")
     ap.add_argument("--banner-bg", default="#F2F3F5", help="微信横幅底色(禁纯白),默认浅灰 #F2F3F5")
     ap.add_argument("--out", default="./out", help="输出目录")
     ap.add_argument("--zip", action="store_true", help="额外打包成 ZIP")
@@ -176,7 +179,7 @@ def main():
         sys.stderr.write("必须提供 --size 或 --wechat\n")
         sys.exit(2)
 
-    # 微信五件套计划(横幅底色可用 --banner-bg 覆盖,默认浅灰而非纯白)
+    # 微信四件套计划(横幅底色可用 --banner-bg 覆盖,默认浅灰而非纯白)
     wechat_assets = [
         (n, s, f, args.banner_bg if n == "详情页横幅" else b)
         for n, s, f, b in WECHAT_ASSETS
