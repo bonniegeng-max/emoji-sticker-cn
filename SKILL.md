@@ -1,7 +1,7 @@
 ---
 name: emoji-sticker-cn
 description: 中文平台(微信表情开放平台 / 小红书 / 抖音)合规表情包生成助手。提供平台尺寸硬约束裁切与命名、违禁词校验(实时 API + 离线兜底)、静态贴纸转内容匹配动效 GIF、合规参考数据维护与平台规范规则巡检工作流。Compliance-focused Chinese-platform emoji sticker assistant: platform size constraints & naming, prohibited-word checks (live API + offline fallback), content-matched animated GIFs, compliance reference maintenance, and platform-rule patrol workflow.
-version: 3.2.2
+version: 3.2.1
 license: MIT
 trigger: "微信表情上架|微信表情包|微信表情开放平台|小红书表情包|抖音表情|中文表情合规模板|表情包|做表情|做套表情|贴纸|表情动图|含义词|赞赏引导图|赞赏致谢图|特效表情|表情形象|表情包上架|表情包合规|巡检表情包规范"
 agent_created: true
@@ -213,3 +213,7 @@ python3 scripts/check_compliance.py "全网最低价,加微信详聊" --platform
 ```
 
 > 路线 A 进阶脚本已随本 skill 发布:`scripts/check_assets.py`(素材机检)、`scripts/make_submit.py`(提交清单生成),直接可用。
+
+## 相关 skill / Related skills
+
+- 发布前先跑 `xiaohongshu-prohibited-words`（离线违禁词检测）：本 skill 负责「做出来」，它负责「发得出去」。
